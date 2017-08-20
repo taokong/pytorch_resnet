@@ -1,0 +1,7 @@
+cifar
+*.pth
+__pycache__
+*.t7
+*.pyc
+.idea/
+work
