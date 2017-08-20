@@ -26,6 +26,7 @@ import setproctitle
 import resnet
 import densenet
 import resnetxt
+import scaleresnetxt
 
 import make_graph
 
@@ -94,6 +95,8 @@ def main():
         net = resnet.resnet110(num_classes = n_classes)
     elif args.net == 'resnetxt29':
         net = resnetxt.resnetxt29(num_classes=n_classes)
+    elif args.net == 'scaleresnetxt29':
+        net = scaleresnetxt.scaleresnetxt29(num_classes=n_classes)
     else:
         net = densenet.DenseNet(growthRate=12, depth=100, reduction=0.5,
                             bottleneck=True, nClasses=n_classes)
