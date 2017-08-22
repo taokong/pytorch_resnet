@@ -84,23 +84,10 @@ def main():
         batch_size=args.batchSz, shuffle=False, **kwargs)
 
     n_classes = 10
-    if args.net == 'resnet20':
-        net = resnet.resnet20(num_classes = n_classes)
-    elif args.net == 'resnet32':
-        net = resnet.resnet32(num_classes = n_classes)
-    elif args.net == 'resnet44':
-        net = resnet.resnet44(num_classes = n_classes)
-    elif args.net == 'resnet56':
-        net = resnet.resnet56(num_classes = n_classes)
-    elif args.net == 'resnet110':
-        net = resnet.resnet110(num_classes = n_classes)
-    elif args.net == 'resnetxt29':
-        net = resnetxt.resnetxt29(num_classes=n_classes)
-    elif args.net == 'deform_resnet32':
+    if args.net == 'deform_resnet32':
         net = deformconvnet.deform_resnet32(num_classes=n_classes)
-    else:
-        net = densenet.DenseNet(growthRate=12, depth=100, reduction=0.5,
-                            bottleneck=True, nClasses=n_classes)
+    elif args.net == 'deform_resnet56':
+        net = deformconvnet.deform_resnet56(num_classes=n_classes)
 
 
     print('  + Number of params: {}'.format(

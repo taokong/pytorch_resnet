@@ -28,14 +28,22 @@ class ScaleResNeXtBottleneck(nn.Module):
             widen_factor: factor to reduce the input dimensionality before convolution.
         """
         super(ScaleResNeXtBottleneck, self).__init__()
-        D = cardinality * out_channels // widen_factor
-        self.conv_reduce = nn.Conv2d(in_channels, D, kernel_size=1, stride=1, padding=0, bias=False)
+        D = cardinality * out_channels // widen_factor * 3
+        
+        self.conv_reduce = nn.Conv2d(in_channels, D, kernel_size=1, stride=stride, padding=0, bias=False)
         self.bn_reduce = nn.BatchNorm2d(D)
-        self.conv_conv_3x1 = nn.Conv2d(D, D, kernel_size=[3,1], stride=stride, padding=[1,0], groups=cardinality, bias=False)
-        self.conv_conv_1x3 = nn.Conv2d(D, D, kernel_size=[1,3], stride=stride, padding=[0,1], groups=cardinality, bias=False)
-        self.conv_conv_1x1 = nn.Conv2d(D, D, kernel_size=1, stride=stride, padding=0, groups=cardinality, bias=False)
+
+        self.conv_conv_3x1 = nn.Conv2d(D, D//4, kernel_size=(3,1), stride=1, padding=(1,0), groups=cardinality, bias=False)
+        self.conv_conv_1x3 = nn.Conv2d(D, D//4, kernel_size=(1,3), stride=1, padding=(0,1), groups=cardinality, bias=False)
+
+        self.bn_3x1 = nn.BatchNorm2d(D//4)
+        self.bn_1x3 = nn.BatchNorm2d(D//4)
+
+        self.conv_conv_1x1 = nn.Conv2d(D, D//2, kernel_size=1, stride=1, padding=0, groups=cardinality, bias=False)
+        self.bn_1x1 = nn.BatchNorm2d(D//2)
 
         self.bn = nn.BatchNorm2d(D)
+
         self.conv_expand = nn.Conv2d(D, out_channels, kernel_size=1, stride=1, padding=0, bias=False)
         self.bn_expand = nn.BatchNorm2d(out_channels)
 
@@ -47,11 +55,20 @@ class ScaleResNeXtBottleneck(nn.Module):
     def forward(self, x):
         bottleneck = self.conv_reduce.forward(x)
         bottleneck = F.relu(self.bn_reduce.forward(bottleneck), inplace=True)
+
         bottleneck_3x1 = self.conv_conv_3x1.forward(bottleneck)
+        bottleneck_3x1 = F.relu(self.bn_3x1.forward(bottleneck_3x1), inplace=True)
+
         bottleneck_1x3 = self.conv_conv_1x3.forward(bottleneck)
-        bottleneck_1x1 = self.conv_conv_1x1.forward(bottleneck)
-        bottleneck = bottleneck_3x1 + bottleneck_1x3 + bottleneck_1x1
+        bottleneck_1x3 = F.relu(self.bn_1x3.forward(bottleneck_1x3), inplace=True)
+
+        bottleneck = self.conv_conv_1x1.forward(bottleneck)
+        bottleneck = F.relu(self.bn_1x1.forward(bottleneck), inplace=True)
+
+        bottleneck = torch.cat((bottleneck_3x1, bottleneck_1x3, bottleneck), 1)
+
         bottleneck = F.relu(self.bn.forward(bottleneck), inplace=True)
+
         bottleneck = self.conv_expand.forward(bottleneck)
         bottleneck = self.bn_expand.forward(bottleneck)
         residual = self.shortcut.forward(x)
@@ -78,10 +95,10 @@ class CifarScaleResNeXt(nn.Module):
         self.widen_factor = widen_factor
         self.nlabels = nlabels
         self.output_size = 64
-        self.stages = [64, 64 * self.widen_factor, 128 * self.widen_factor, 256 * self.widen_factor]
+        self.stages = [self.output_size, self.output_size * self.widen_factor, self.output_size * 2 * self.widen_factor, self.output_size * 4 * self.widen_factor]
 
-        self.conv_1_3x3 = nn.Conv2d(3, 64, 3, 1, 1, bias=False)
-        self.bn_1 = nn.BatchNorm2d(64)
+        self.conv_1_3x3 = nn.Conv2d(3, self.output_size, 3, 1, 1, bias=False)
+        self.bn_1 = nn.BatchNorm2d(self.output_size)
         self.stage_1 = self.block('stage_1', self.stages[0], self.stages[1], 1)
         self.stage_2 = self.block('stage_2', self.stages[1], self.stages[2], 2)
         self.stage_3 = self.block('stage_3', self.stages[2], self.stages[3], 2)
