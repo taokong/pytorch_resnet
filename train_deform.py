@@ -28,6 +28,7 @@ import densenet
 import resnetxt
 import scaleresnetxt
 import deformconvnet
+import deformresnext
 
 import make_graph
 
@@ -84,11 +85,12 @@ def main():
         batch_size=args.batchSz, shuffle=False, **kwargs)
 
     n_classes = 10
-    if args.net == 'deform_resnet32':
-        net = deformconvnet.deform_resnet32(num_classes=n_classes)
-    elif args.net == 'deform_resnet56':
+    if args.net == 'deform_resnet56':
         net = deformconvnet.deform_resnet56(num_classes=n_classes)
-
+    elif args.net == 'deform_resnet110':
+        net = deformconvnet.deform_resnet110(num_classes=n_classes)
+    elif args.net == 'deformresnetxt29':
+        net = deformresnext.deformresnetxt29(num_classes=n_classes)
 
     print('  + Number of params: {}'.format(
         sum([p.data.nelement() for p in net.parameters()])))

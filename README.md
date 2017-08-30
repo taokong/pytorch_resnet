@@ -16,4 +16,8 @@ ResNetXt29: Test set: Average loss: 0.1428, Error: 372/10000 (4%)
 
 Densenet100: Test set: Average loss: 0.2084, Error: 477/10000 (5%)
 
+Deform ResNet56(one stage): Test set: Average loss: 0.2658, Error: 553/10000 (6%)
+
+Deform ResNet56(two stage): Test set: Average loss: 0.2177, Error: 477/10000 (5%)
+
 
